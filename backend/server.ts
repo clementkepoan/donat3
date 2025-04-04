@@ -1,5 +1,7 @@
 import express from "express";
-import platformRoutes from "./route/platformRoutes";
+import platformRoutes from "./routes/platformRoutes";
+import userRoutes from "./routes/userRoutes";
+import { connectDB } from "./config/db";
 
 // import mongoose from "mongoose";
 // import dotenv from "dotenv";
@@ -13,6 +15,9 @@ import platformRoutes from "./route/platformRoutes";
 // import expressSanitizer from "express-sanitizer";
 // import { cookieParser } from "cookie-parser";
 
+// Connect to DB
+connectDB();
+
 const app = express();
 
 // Middleware
@@ -23,7 +28,9 @@ app.use(express.json());
 // Connect to DB
 // connectDB();
 
-// Routes
+// User Routes
+app.use("/user", userRoutes);
+// Platform Routes
 app.use("/platform", platformRoutes);
 
 const PORT = process.env.PORT || 8000;
