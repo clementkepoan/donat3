@@ -1,7 +1,10 @@
 import express from "express";
-import platformRoutes from "./routes/platformRoutes";
+import streamerRoutes from "./routes/streamerRoutes";
 import userRoutes from "./routes/userRoutes";
 import { connectDB } from "./config/db";
+
+import cookieParser from "cookie-parser";
+import { authMiddleware } from "./middleware/authMiddleware";
 
 // import mongoose from "mongoose";
 // import dotenv from "dotenv";
@@ -13,7 +16,6 @@ import { connectDB } from "./config/db";
 // import hpp from "hpp";
 // import path from "path";
 // import expressSanitizer from "express-sanitizer";
-// import { cookieParser } from "cookie-parser";
 
 // Connect to DB
 connectDB();
@@ -22,16 +24,15 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-// app.use(cookieParser());
-// app.use(handleCookies);
+app.use(cookieParser());
 
 // Connect to DB
 // connectDB();
 
 // User Routes
-app.use("/user", userRoutes);
-// Platform Routes
-app.use("/platform", platformRoutes);
+app.use("/user", authMiddleware, userRoutes);
+// Streamer Routes
+app.use("/streamer", authMiddleware, streamerRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
