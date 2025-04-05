@@ -3,12 +3,21 @@ import Metadata from "../models/metadataModel";
 import Streamer from "../models/streamerModel";
 
 export const linkStreamerPlatform = async (req: Request, res: Response) => {
-  const { id, platform, name, streamername, url, subscribers, image } =
-    req.body;
+  const {
+    id,
+    public_address,
+    platform,
+    name,
+    streamername,
+    url,
+    subscribers,
+    image,
+  } = req.body;
 
   console.log(
     "linkStreamerPlatform",
     id,
+    public_address,
     platform,
     name,
     streamername,
@@ -19,6 +28,7 @@ export const linkStreamerPlatform = async (req: Request, res: Response) => {
 
   if (
     !id ||
+    !public_address ||
     !platform ||
     !name ||
     !streamername ||
@@ -42,6 +52,7 @@ export const linkStreamerPlatform = async (req: Request, res: Response) => {
     // Create a new metadata entry
     const metadata = await Metadata.create({
       _id: id,
+      public_address,
       platform,
       name,
       streamername,

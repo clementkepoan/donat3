@@ -4,7 +4,6 @@ import userRoutes from "./routes/userRoutes";
 import { connectDB } from "./config/db";
 
 import cookieParser from "cookie-parser";
-import { authMiddleware } from "./middleware/authMiddleware";
 
 // import mongoose from "mongoose";
 // import dotenv from "dotenv";
@@ -30,9 +29,9 @@ app.use(cookieParser());
 // connectDB();
 
 // User Routes
-app.use("/user", authMiddleware, userRoutes);
+app.use("/user", userRoutes);
 // Streamer Routes
-app.use("/streamer", authMiddleware, streamerRoutes);
+app.use("/streamer", streamerRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
