@@ -1,6 +1,6 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // Mock data for campaigns
 const mockCampaigns = [
@@ -28,16 +28,20 @@ const mockCampaigns = [
     goal: "5.0 ETH",
     raised: "2.1 ETH",
   },
-]
+];
 
 export default function CampaignsPage() {
   return (
-    <main className="container py-8">
+    <main className="py-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-4">Browse Campaigns</h1>
 
         <div className="flex gap-2 mb-6">
-          <Input type="search" placeholder="Search campaigns..." className="max-w-sm" />
+          <Input
+            type="search"
+            placeholder="Search campaigns..."
+            className="max-w-sm"
+          />
           <Button>Search</Button>
         </div>
 
@@ -47,7 +51,9 @@ export default function CampaignsPage() {
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-bold">{campaign.title}</h3>
-                  <p className="text-sm text-muted-foreground">{campaign.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {campaign.description}
+                  </p>
                   <p className="text-sm mt-2">Creator: {campaign.creator}</p>
                 </div>
                 <div className="text-right">
@@ -65,6 +71,5 @@ export default function CampaignsPage() {
         </div>
       </div>
     </main>
-  )
+  );
 }
-

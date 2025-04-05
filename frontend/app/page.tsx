@@ -1,6 +1,6 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Gift, PlusCircle, Wallet, Search } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Gift, PlusCircle, Wallet, Search } from "lucide-react";
 
 export default function Home() {
   return (
@@ -8,9 +8,12 @@ export default function Home() {
       <main className="flex-1">
         <section className="py-12 px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-3xl font-bold mb-6">Crypto Donations for Streamers</h1>
+            <h1 className="text-3xl font-bold mb-6">
+              Crypto Donations for Streamers
+            </h1>
             <p className="mb-8 text-muted-foreground">
-              Support your favorite content creators with direct crypto donations
+              Support your favorite content creators with direct crypto
+              donations
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/donate">
@@ -19,10 +22,10 @@ export default function Home() {
                   Find Streamers
                 </Button>
               </Link>
-              <Link href="/mint">
+              <Link href="/profile">
                 <Button variant="outline" className="w-full sm:w-auto">
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Mint NFT
+                  Setup Profile
                 </Button>
               </Link>
             </div>
@@ -39,7 +42,8 @@ export default function Home() {
                   <h3 className="font-bold">P2P Donations</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Send crypto directly from your wallet to streamers with no platform fees.
+                  Send crypto directly from your wallet to streamers with no
+                  platform fees.
                 </p>
               </div>
               <div className="bg-card p-4 rounded border">
@@ -48,7 +52,8 @@ export default function Home() {
                   <h3 className="font-bold">Streamer Profiles</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Discover and support your favorite content creators through searchable profiles.
+                  Discover and support your favorite content creators through
+                  searchable profiles.
                 </p>
               </div>
               <div className="bg-card p-4 rounded border">
@@ -65,6 +70,5 @@ export default function Home() {
         </section>
       </main>
     </div>
-  )
+  );
 }
-

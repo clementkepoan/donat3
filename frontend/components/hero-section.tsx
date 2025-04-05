@@ -1,6 +1,6 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ArrowRight } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 
 export function HeroSection() {
   return (
@@ -9,10 +9,11 @@ export function HeroSection() {
         <div className="flex flex-col items-center space-y-4 text-center">
           <div className="space-y-2">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-              Crypto Donations for Streamers
+              Donate for Streamers
             </h1>
             <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-              Create campaigns, receive crypto donations, and display them on your stream with customizable overlays.
+              Create campaigns, receive crypto donations, and display them on
+              your stream with customizable overlays.
             </p>
           </div>
           <div className="space-x-4">
@@ -30,6 +31,5 @@ export function HeroSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }
-

@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 
 interface DonationAlert {
-  id: string
-  donor: string
-  amount: string
-  timestamp: number
+  id: string;
+  donor: string;
+  amount: string;
+  timestamp: number;
 }
 
 // Mock settings
@@ -20,7 +20,7 @@ const mockSettings = {
   showDonorName: true,
   showAmount: true,
   customMessage: "Thanks for your donation!",
-}
+};
 
 // Mock function to simulate receiving donations
 const mockDonationListener = (callback: (donation: DonationAlert) => void) => {
@@ -31,43 +31,43 @@ const mockDonationListener = (callback: (donation: DonationAlert) => void) => {
       donor: `Donor${Math.floor(Math.random() * 1000)}`,
       amount: `${(Math.random() * 0.2).toFixed(3)} ETH`,
       timestamp: Date.now(),
-    }
+    };
 
-    callback(mockDonation)
-  }, 10000)
+    callback(mockDonation);
+  }, 10000);
 
-  return () => clearInterval(interval)
-}
+  return () => clearInterval(interval);
+};
 
 export default function OverlayPage() {
-  const params = useParams()
-  const campaignId = params.id as string
+  const params = useParams();
+  const campaignId = params.id as string;
 
-  const [currentAlert, setCurrentAlert] = useState<DonationAlert | null>(null)
-  const [settings] = useState(mockSettings)
-  const [isVisible, setIsVisible] = useState(false)
+  const [currentAlert, setCurrentAlert] = useState<DonationAlert | null>(null);
+  const [settings] = useState(mockSettings);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    console.log(`Loading overlay for campaign: ${campaignId}`)
+    console.log(`Loading overlay for campaign: ${campaignId}`);
 
     // Set up donation listener
     const cleanup = mockDonationListener((donation) => {
-      setCurrentAlert(donation)
-      setIsVisible(true)
+      setCurrentAlert(donation);
+      setIsVisible(true);
 
       // Hide the alert after the specified duration
       setTimeout(() => {
-        setIsVisible(false)
+        setIsVisible(false);
 
         // Clear the alert after the fade-out animation
         setTimeout(() => {
-          setCurrentAlert(null)
-        }, 500)
-      }, settings.alertDuration * 1000)
-    })
+          setCurrentAlert(null);
+        }, 500);
+      }, settings.alertDuration * 1000);
+    });
 
-    return cleanup
-  }, [campaignId, settings.alertDuration])
+    return cleanup;
+  }, [campaignId, settings.alertDuration]);
 
   return (
     <div className="w-full h-screen overflow-hidden">
@@ -84,13 +84,14 @@ export default function OverlayPage() {
           }}
         >
           <div className="flex flex-col items-center justify-center">
-            {settings.showDonorName && <div className="font-bold">{currentAlert.donor}</div>}
+            {settings.showDonorName && (
+              <div className="font-bold">{currentAlert.donor}</div>
+            )}
             {settings.showAmount && <div>donated {currentAlert.amount}</div>}
             <div className="mt-2">{settings.customMessage}</div>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
-

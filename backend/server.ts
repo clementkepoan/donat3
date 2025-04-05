@@ -1,9 +1,10 @@
 import express from "express";
 import streamerRoutes from "./routes/streamerRoutes";
 import userRoutes from "./routes/userRoutes";
+import metadataRoutes from "./routes/metadataRoutes";
 import { connectDB } from "./config/db";
 
-import cookieParser from "cookie-parser";
+import cors from "cors";
 
 // import mongoose from "mongoose";
 // import dotenv from "dotenv";
@@ -21,9 +22,9 @@ connectDB();
 
 const app = express();
 
+app.use(cors({ origin: "*" }));
 // Middleware
 app.use(express.json());
-app.use(cookieParser());
 
 // Connect to DB
 // connectDB();
@@ -32,6 +33,8 @@ app.use(cookieParser());
 app.use("/user", userRoutes);
 // Streamer Routes
 app.use("/streamer", streamerRoutes);
+// Metadata Routes
+app.use("/metadata", metadataRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

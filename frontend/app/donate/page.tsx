@@ -1,91 +1,83 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { Search, Users } from "lucide-react";
+import { StreamerCard } from "@/components/streamer-card";
 
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { useToast } from "@/hooks/use-toast"
-import { Search, Users } from "lucide-react"
-import { StreamerCard } from "@/components/streamer-card"
+// Define the streamer type
+type Streamer = {
+  id: string;
+  name: string;
+  image: string;
+  subscribers: number;
+  public_address: string;
+};
 
-// Mock streamer data
-const mockStreamers = [
-  {
-    id: "1",
-    name: "CryptoGamer",
-    username: "cryptogamer",
-    profileImage: "/placeholder.svg?height=100&width=100",
-    category: "Gaming",
-    description: "Streaming Axie Infinity and other blockchain games",
-    walletAddress: "0x1234567890123456789012345678901234567890",
-    followers: 1200,
-  },
-  {
-    id: "2",
-    name: "NFT Artist",
-    username: "nftartist",
-    profileImage: "/placeholder.svg?height=100&width=100",
-    category: "Art",
-    description: "Creating NFT art live on stream",
-    walletAddress: "0x2345678901234567890123456789012345678901",
-    followers: 850,
-  },
-  {
-    id: "3",
-    name: "Crypto Teacher",
-    username: "cryptoteacher",
-    profileImage: "/placeholder.svg?height=100&width=100",
-    category: "Education",
-    description: "Teaching blockchain and cryptocurrency concepts",
-    walletAddress: "0x3456789012345678901234567890123456789012",
-    followers: 3200,
-  },
-  {
-    id: "4",
-    name: "DeFi Degen",
-    username: "defidegen",
-    profileImage: "/placeholder.svg?height=100&width=100",
-    category: "Finance",
-    description: "Exploring DeFi protocols and yield farming strategies",
-    walletAddress: "0x4567890123456789012345678901234567890123",
-    followers: 1800,
-  },
-]
+const limit = 4;
 
 export default function DonatePage() {
-  const { toast } = useToast()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filteredStreamers, setFilteredStreamers] = useState(mockStreamers)
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [streamers, setStreamers] = useState<Streamer[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
+  // Fetch streamers from API
+  useEffect(() => {
+    const fetchStreamers = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/streamer/get", {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            amount: 4,
+          }),
+          method: "POST",
+        });
 
-    if (!searchQuery.trim()) {
-      setFilteredStreamers(mockStreamers)
-      return
+        const result = await response.json();
+
+        if (response.ok) {
+          setStreamers(() => [...result.streamers]);
+        }
+      } catch (error) {
+        console.error("Error getting streamers:", error);
+      }
+    };
+
+    fetchStreamers();
+  }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch("http://localhost:8000/streamer/get", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: 4,
+          searchQuery,
+        }),
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setStreamers(() => [...result.streamers]);
+      }
+    } catch (error) {
+      console.error("Error getting streamers:", error);
     }
-
-    const query = searchQuery.toLowerCase()
-    const results = mockStreamers.filter(
-      (streamer) =>
-        streamer.name.toLowerCase().includes(query) ||
-        streamer.username.toLowerCase().includes(query) ||
-        streamer.category.toLowerCase().includes(query) ||
-        streamer.description.toLowerCase().includes(query),
-    )
-
-    setFilteredStreamers(results)
-
-    if (results.length === 0) {
-      toast({
-        title: "No streamers found",
-        description: "Try a different search term",
-      })
-    }
-  }
+  };
 
   return (
-    <main className="container py-8">
+    <main className="py-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold">Find a Streamer to Support</h1>
@@ -103,9 +95,13 @@ export default function DonatePage() {
           </form>
         </div>
 
-        {filteredStreamers.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <p>Loading streamers...</p>
+          </div>
+        ) : streamers.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredStreamers.map((streamer) => (
+            {streamers.map((streamer) => (
               <StreamerCard key={streamer.id} streamer={streamer} />
             ))}
           </div>
@@ -113,11 +109,12 @@ export default function DonatePage() {
           <div className="text-center py-12 border rounded-lg">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h2 className="text-xl font-medium mb-2">No streamers found</h2>
-            <p className="text-muted-foreground mb-4">Try searching with different keywords</p>
+            <p className="text-muted-foreground mb-4">
+              Try searching with different keywords
+            </p>
           </div>
         )}
       </div>
     </main>
-  )
+  );
 }
-

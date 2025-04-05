@@ -1,61 +1,61 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
-import { WalletConnect } from "@/components/wallet-connect"
-import { Loader2, Upload, ImageIcon } from "lucide-react"
-import Image from "next/image"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { WalletConnect } from "@/components/wallet-connect";
+import { Loader2, Upload, ImageIcon } from "lucide-react";
+import Image from "next/image";
 
 export default function MintPage() {
-  const { toast } = useToast()
-  const [nftName, setNftName] = useState("")
-  const [nftDescription, setNftDescription] = useState("")
-  const [recipientAddress, setRecipientAddress] = useState("")
-  const [isMinting, setIsMinting] = useState(false)
-  const [walletConnected, setWalletConnected] = useState(false)
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [transactionHash, setTransactionHash] = useState<string | null>(null)
+  const { toast } = useToast();
+  const [nftName, setNftName] = useState("");
+  const [nftDescription, setNftDescription] = useState("");
+  const [recipientAddress, setRecipientAddress] = useState("");
+  const [isMinting, setIsMinting] = useState(false);
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [transactionHash, setTransactionHash] = useState<string | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setImageFile(file)
+      const file = e.target.files[0];
+      setImageFile(file);
 
       // Create preview
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const handleMint = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!nftName || !imageFile) {
       toast({
         title: "Missing information",
         description: "Please provide a name and image for your NFT",
-      })
-      return
+      });
+      return;
     }
 
     if (!walletConnected) {
       toast({
         title: "Please connect your wallet first",
-      })
-      return
+      });
+      return;
     }
 
-    setIsMinting(true)
+    setIsMinting(true);
 
     try {
       // In a real implementation, you would:
@@ -64,7 +64,7 @@ export default function MintPage() {
       // 3. Call a smart contract to mint the NFT
 
       // Simulate minting process
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Mock transaction hash
       const mockTxHash =
@@ -72,28 +72,29 @@ export default function MintPage() {
         Array(64)
           .fill(0)
           .map(() => Math.floor(Math.random() * 16).toString(16))
-          .join("")
+          .join("");
 
-      setTransactionHash(mockTxHash)
+      setTransactionHash(mockTxHash);
 
       toast({
         title: "NFT minted successfully!",
-        description: "Your NFT has been minted and will appear in your wallet soon",
-      })
+        description:
+          "Your NFT has been minted and will appear in your wallet soon",
+      });
     } catch (error: any) {
-      console.error("Minting error:", error)
+      console.error("Minting error:", error);
       toast({
         title: "Minting failed",
         description: error.message || "There was an error minting your NFT",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsMinting(false)
+      setIsMinting(false);
     }
-  }
+  };
 
   return (
-    <main className="container py-8">
+    <main className="py-8">
       <div className="max-w-md mx-auto">
         <h1 className="text-2xl font-bold mb-6">Mint an NFT</h1>
 
@@ -117,7 +118,9 @@ export default function MintPage() {
                 ) : (
                   <div className="flex flex-col items-center p-4">
                     <ImageIcon className="h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">Click to upload image</p>
+                    <p className="text-sm text-muted-foreground">
+                      Click to upload image
+                    </p>
                   </div>
                 )}
                 <input
@@ -170,7 +173,11 @@ export default function MintPage() {
               <WalletConnect onConnected={setWalletConnected} />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isMinting || !walletConnected}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isMinting || !walletConnected}
+            >
               {isMinting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -201,6 +208,5 @@ export default function MintPage() {
         </div>
       </div>
     </main>
-  )
+  );
 }
-

@@ -11,4 +11,6 @@ router.post("/link", linkStreamerPlatform);
 router.post("/", addWalletDisplayName);
 router.post("/milestone", addMilestoneAddress);
 
+router.post("/get", getStreamers);
+
 export default router;
