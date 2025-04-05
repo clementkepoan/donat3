@@ -19,9 +19,8 @@ export type Streamer = {
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "CryptoDonate - Prototype",
-  description: "Crypto donation platform for streamers",
-  generator: "v0.dev",
+  title: "Donat3",
+  description: "A platform to donate crypto to streamers",
 };
 
 export default function RootLayout({
@@ -34,7 +33,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <div className="relative flex min-h-screen flex-col">
           <SiteHeader />
-          <GoogleOAuthProvider clientId="24120971675-ehvmrfi7e2odst5pdc3tjf6ej22bb5rv.apps.googleusercontent.com">
+          <GoogleOAuthProvider
+            clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}
+          >
             {children}
           </GoogleOAuthProvider>
           <footer className="border-t py-4">

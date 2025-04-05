@@ -35,6 +35,7 @@ export default function StreamerDonatePage() {
   const [streamer, setStreamer] = useState<Streamer | null>(null);
   const [donationAmount, setDonationAmount] = useState("");
   const [donationMessage, setDonationMessage] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [isDonating, setIsDonating] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
@@ -340,6 +341,19 @@ export default function StreamerDonatePage() {
                       </svg>
                     </div>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-base font-medium">
+                    Display Name
+                  </Label>
+                  <Input
+                    id="name"
+                    placeholder={`Your name or alias`}
+                    required
+                    className="py-6 text-lg rounded-xl"
+                    onChange={(e) => setDisplayName(e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">
