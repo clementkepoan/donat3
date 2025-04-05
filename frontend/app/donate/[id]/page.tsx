@@ -24,6 +24,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { Streamer } from "@/app/layout";
+import { io, Socket } from "socket.io-client";
 
 export default function StreamerDonatePage() {
   const params = useParams();
@@ -160,6 +161,16 @@ export default function StreamerDonatePage() {
       toast({
         title: "Donation successful!",
         description: `You've successfully donated to ${streamer.name}`,
+      });
+
+      // send data to socket server using socket io
+      const socket = io("http://localhost:8000", {
+        transports: ["websocket"],
+      });
+      socket.emit("donation", {
+        id,
+        name: displayName,
+        donation: donationAmount,
       });
 
       setDonationAmount("");
@@ -305,7 +316,7 @@ export default function StreamerDonatePage() {
               <form onSubmit={handleDonate} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="amount" className="text-base font-medium">
-                    Amount (ETH)
+                    Amount (MATIC)
                   </Label>
                   <div className="relative">
                     <Input
@@ -428,7 +439,9 @@ export default function StreamerDonatePage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-400">Payment Method</span>
-                  <span className="font-medium text-white">Ethereum (ETH)</span>
+                  <span className="font-medium text-white">
+                    Polygon (MATIC)
+                  </span>
                 </div>
               </div>
 

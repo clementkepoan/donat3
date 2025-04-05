@@ -36,7 +36,7 @@ export default function RootLayout({
           <GoogleOAuthProvider
             clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string}
           >
-            {children}
+            <OverlayProvider>{children}</OverlayProvider>
           </GoogleOAuthProvider>
           <footer className="border-t border-[#2A2A2E] bg-[#121217] py-6 mt-12">
             <div className="flex flex-col items-center justify-between gap-4 md:flex-row text-sm text-gray-400 px-20">
@@ -61,3 +61,4 @@ export default function RootLayout({
 }
 
 import "./globals.css";
+import { OverlayProvider } from "@/hooks/overlayContext";

@@ -123,3 +123,27 @@ export const getOneStreamerMetadata = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const getIDByAddress = async (req: Request, res: Response) => {
+  const { public_address } = req.body;
+  console.log("getIDByAddress", req.body);
+
+  if (!public_address) {
+    res.status(400).json({ message: "Missing required fields" });
+    return;
+  }
+
+  try {
+    const streamer = await metadata.findOne({
+      public_address,
+    });
+
+    res.status(200).json({
+      message: "Streamer fetched successfully",
+      streamer,
+    });
+  } catch (error) {
+    console.error("Error processing request:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

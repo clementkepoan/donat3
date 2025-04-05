@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,53 +16,76 @@ import { Copy, Zap, Palette, WifiIcon, Volume2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
+import { useOverlay } from "@/hooks/overlayContext";
+import DonationAlert from "@/components/donation-alert";
+import { useEffect, useState } from "react";
+
 export default function OverlayPage() {
   const { toast } = useToast();
-  const [overlaySettings, setOverlaySettings] = useState({
-    alertDuration: 5,
-    fontSize: 24,
-    fontFamily: "Inter",
-    primaryColor: "#7C3AED",
-    backgroundColor: "rgba(17, 24, 39, 0.85)",
-    accentColor: "#10B981",
-    showDonorName: true,
-    showAmount: true,
-    soundEnabled: false,
-    customMessage: "Thanks for your donation!",
-    borderStyle: "gradient", // none, solid, gradient
-  });
+  const [id, setId] = useState<string | null>(null);
 
-  const handleChange = (field: string, value: any) => {
-    setOverlaySettings((prev) => ({ ...prev, [field]: value }));
-  };
+  const {
+    accentColor,
+    backgroundColor,
+    borderStyle,
+    customMessage,
+    fontFamily,
+    fontSize,
+    primaryColor,
+    showAmount,
+    showDonorName,
+
+    setBorderStyle,
+    setCustomMessage,
+    setFontFamily,
+    setFontSize,
+    setPrimaryColor,
+    setBackgroundColor,
+    setAccentColor,
+    setShowAmount,
+    setShowDonorName,
+  } = useOverlay();
+
+  useEffect(() => {
+    const getIdByAddress = async () => {
+      const account = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const address = account[0];
+      console.log("Address:", address);
+
+      const response = await fetch(
+        "http://localhost:8000/metadata/get_id_by_address",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            public_address: address,
+          }),
+        }
+      );
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      if (response.ok) {
+        setId(data._id);
+      } else {
+        console.error("Error fetching ID:", data.error);
+      }
+    };
+    getIdByAddress();
+  }, []);
 
   const handleCopyUrl = () => {
-    const overlayUrl = `${window.location.origin}/overlay/preview`;
+    const overlayUrl = `${window.location.origin}/overlay/${id}`;
     navigator.clipboard.writeText(overlayUrl);
     toast({
       title: "URL copied to clipboard!",
       description: "Paste this in your streaming software",
       variant: "default",
     });
-  };
-
-  const getBorderStyle = () => {
-    switch (overlaySettings.borderStyle) {
-      case "none":
-        return {};
-      case "solid":
-        return { border: `2px solid ${overlaySettings.accentColor}` };
-      case "gradient":
-        return {
-          border: "2px solid transparent",
-          backgroundClip: "padding-box",
-          WebkitBackgroundClip: "padding-box",
-          backgroundImage: `linear-gradient(${overlaySettings.backgroundColor}, ${overlaySettings.backgroundColor}), 
-                          linear-gradient(135deg, ${overlaySettings.accentColor}, ${overlaySettings.primaryColor})`,
-        };
-      default:
-        return {};
-    }
   };
 
   return (
@@ -92,10 +114,8 @@ export default function OverlayPage() {
                   <Label htmlFor="customMessage">Alert Message</Label>
                   <Input
                     id="customMessage"
-                    value={overlaySettings.customMessage}
-                    onChange={(e) =>
-                      handleChange("customMessage", e.target.value)
-                    }
+                    value={customMessage}
+                    onChange={(e) => setCustomMessage!(e.target.value)}
                     placeholder="Thanks for your donation!"
                     className="bg-gray-900/50 border-gray-700"
                   />
@@ -105,10 +125,9 @@ export default function OverlayPage() {
                   <div className="space-y-2">
                     <Label htmlFor="fontFamily">Font Family</Label>
                     <Select
-                      value={overlaySettings.fontFamily}
-                      onValueChange={(value) =>
-                        handleChange("fontFamily", value)
-                      }
+                      value={fontFamily}
+                      onValueChange={(value) => setFontFamily!(value)}
+                      defaultValue="Inter"
                     >
                       <SelectTrigger className="bg-gray-900/50 border-gray-700">
                         <SelectValue />
@@ -123,18 +142,14 @@ export default function OverlayPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="fontSize">
-                      Font Size: {overlaySettings.fontSize}px
-                    </Label>
+                    <Label htmlFor="fontSize">Font Size: {fontSize}px</Label>
                     <Slider
                       id="fontSize"
                       min={16}
                       max={48}
                       step={1}
-                      defaultValue={[overlaySettings.fontSize]}
-                      onValueChange={([value]) =>
-                        handleChange("fontSize", value)
-                      }
+                      defaultValue={[fontSize!]}
+                      onValueChange={([value]) => setFontSize!(value)}
                       className="py-2"
                     />
                   </div>
@@ -147,16 +162,14 @@ export default function OverlayPage() {
                       <div
                         className="h-10 w-10 rounded-md border border-gray-600"
                         style={{
-                          backgroundColor: overlaySettings.primaryColor,
+                          backgroundColor: primaryColor,
                         }}
                       />
                       <Input
                         id="primaryColor"
                         type="color"
-                        value={overlaySettings.primaryColor}
-                        onChange={(e) =>
-                          handleChange("primaryColor", e.target.value)
-                        }
+                        value={primaryColor}
+                        onChange={(e) => setPrimaryColor!(e.target.value)}
                         className="w-full h-10"
                       />
                     </div>
@@ -168,13 +181,13 @@ export default function OverlayPage() {
                       <div
                         className="h-10 w-10 rounded-md border border-gray-600 bg-opacity-20"
                         style={{
-                          backgroundColor: overlaySettings.backgroundColor,
+                          backgroundColor: backgroundColor,
                         }}
                       />
                       <Input
                         id="backgroundColor"
                         type="color"
-                        value={overlaySettings.backgroundColor
+                        value={backgroundColor!
                           .replace("rgba", "rgb")
                           .replace(/,\s*[\d.]+\)/, ")")}
                         onChange={(e) => {
@@ -183,10 +196,7 @@ export default function OverlayPage() {
                           const r = parseInt(hex.slice(1, 3), 16);
                           const g = parseInt(hex.slice(3, 5), 16);
                           const b = parseInt(hex.slice(5, 7), 16);
-                          handleChange(
-                            "backgroundColor",
-                            `rgba(${r}, ${g}, ${b}, 0.85)`
-                          );
+                          setBackgroundColor!(`rgba(${r}, ${g}, ${b}, 0.85)`);
                         }}
                         className="w-full h-10"
                       />
@@ -198,15 +208,13 @@ export default function OverlayPage() {
                     <div className="flex items-center gap-2">
                       <div
                         className="h-10 w-10 rounded-md border border-gray-600"
-                        style={{ backgroundColor: overlaySettings.accentColor }}
+                        style={{ backgroundColor: accentColor }}
                       />
                       <Input
                         id="accentColor"
                         type="color"
-                        value={overlaySettings.accentColor}
-                        onChange={(e) =>
-                          handleChange("accentColor", e.target.value)
-                        }
+                        value={accentColor}
+                        onChange={(e) => setAccentColor!(e.target.value)}
                         className="w-full h-10"
                       />
                     </div>
@@ -216,10 +224,8 @@ export default function OverlayPage() {
                 <div className="space-y-2">
                   <Label htmlFor="borderStyle">Border Style</Label>
                   <Select
-                    value={overlaySettings.borderStyle}
-                    onValueChange={(value) =>
-                      handleChange("borderStyle", value)
-                    }
+                    value={borderStyle}
+                    onValueChange={(value) => setBorderStyle!(value)}
                   >
                     <SelectTrigger className="bg-gray-900/50 border-gray-700">
                       <SelectValue />
@@ -236,14 +242,10 @@ export default function OverlayPage() {
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="showDonorName"
-                      checked={overlaySettings.showDonorName}
-                      onCheckedChange={(checked) =>
-                        handleChange("showDonorName", checked)
-                      }
+                      checked={showDonorName}
+                      onCheckedChange={(checked) => setShowDonorName!(checked)}
                       className={cn(
-                        overlaySettings.showDonorName
-                          ? "bg-[#10B981]"
-                          : "bg-gray-700"
+                        showDonorName ? "bg-[#10B981]" : "bg-gray-700"
                       )}
                     />
                     <Label htmlFor="showDonorName">Show Donor Name</Label>
@@ -252,14 +254,10 @@ export default function OverlayPage() {
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="showAmount"
-                      checked={overlaySettings.showAmount}
-                      onCheckedChange={(checked) =>
-                        handleChange("showAmount", checked)
-                      }
+                      checked={showAmount}
+                      onCheckedChange={(checked) => setShowAmount!(checked)}
                       className={cn(
-                        overlaySettings.showAmount
-                          ? "bg-[#10B981]"
-                          : "bg-gray-700"
+                        showAmount ? "bg-[#10B981]" : "bg-gray-700"
                       )}
                     />
                     <Label htmlFor="showAmount">Show Amount</Label>
@@ -280,7 +278,7 @@ export default function OverlayPage() {
 
               <div className="flex items-center gap-2">
                 <Input
-                  value={`${window.location.origin}/overlay/preview`}
+                  value={`${window.location.origin}/overlay/`}
                   readOnly
                   className="bg-gray-900/50 border-gray-700 font-mono text-sm"
                 />
@@ -296,46 +294,22 @@ export default function OverlayPage() {
           </div>
 
           <div className="md:col-span-1">
-            <div className="backdrop-blur-sm bg-black/30 rounded-xl p-6 border border-gray-800 shadow-xl sticky top-6">
-              <h2 className="text-xl font-bold mb-6">Preview</h2>
+            <div className="backdrop-blur-sm bg-black/30 rounded-xl border border-gray-800 shadow-xl sticky">
+              <DonationAlert
+                accentColor={accentColor!}
+                backgroundColor={backgroundColor!}
+                borderStyle={borderStyle!}
+                customMessage={customMessage!}
+                fontFamily={fontFamily!}
+                fontSize={fontSize!}
+                primaryColor={primaryColor!}
+                showAmount={showAmount!}
+                showDonorName={showDonorName!}
+              />
+            </div>
 
-              <div className="w-full aspect-video rounded-lg bg-gray-900/50 relative flex items-center justify-center p-4 overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center p-3">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-cyan-500/10 animate-pulse"></div>
-                  <div
-                    className="w-full mx-auto p-4 m-2 rounded-lg"
-                    style={{
-                      backgroundColor: overlaySettings.backgroundColor,
-                      color: overlaySettings.primaryColor,
-                      fontFamily: overlaySettings.fontFamily,
-                      fontSize: `${overlaySettings.fontSize}px`,
-                      ...getBorderStyle(),
-                    }}
-                  >
-                    <div className="flex flex-col items-center justify-center text-center">
-                      {overlaySettings.showDonorName && (
-                        <div className="font-bold truncate w-full">
-                          eth_donor.eth
-                        </div>
-                      )}
-                      {overlaySettings.showAmount && (
-                        <div className="flex items-center gap-1 text-sm">
-                          <span style={{ color: overlaySettings.accentColor }}>
-                            donated 0.05 ETH
-                          </span>
-                        </div>
-                      )}
-                      <div className="mt-1">
-                        {overlaySettings.customMessage}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 text-xs text-gray-500">
-                <p>This is how your donation alerts will appear on stream.</p>
-              </div>
+            <div className="mt-4 text-xs text-gray-500">
+              <p>This is how your donation alerts will appear on stream.</p>
             </div>
           </div>
         </div>

@@ -66,7 +66,7 @@ export default function MyWalletPage() {
 
       try {
         setIsLoading(true);
-        const url = `https://polygon-mainnet.g.alchemy.com/nft/v2/${process.env.NODE_PUBLIC_ALCHEMY_API_KEY}/getNFTs?owner=${walletAddress}&withMetadata=true`;
+        const url = `https://polygon-mainnet.g.alchemy.com/nft/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}/getNFTs?owner=${walletAddress}&withMetadata=true`;
         const res = await fetch(url);
 
         if (!res.ok) {
@@ -97,7 +97,7 @@ export default function MyWalletPage() {
       try {
         setIsLoading(true);
         // Use the correct API endpoint for Alchemy token balances
-        const url = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}/`;
+        const url = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}/`;
 
         const requestOptions = {
           method: "POST",
@@ -106,7 +106,7 @@ export default function MyWalletPage() {
             jsonrpc: "2.0",
             id: 1,
             method: "alchemy_getTokenBalances",
-            params: ["0x0e5FA4Fc5E1776a8A618b620F2e91E80c4f96768", "erc20"],
+            params: [walletAddress, "erc20"],
           }),
         };
 
@@ -121,7 +121,7 @@ export default function MyWalletPage() {
           // Fetch metadata for each token
           const tokenBalances = data.result.tokenBalances;
           const tokenDataPromises = tokenBalances.map(async (token: any) => {
-            const metadataUrl = `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}/`;
+            const metadataUrl = `https://polygon-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}/`;
             const metadataOptions = {
               method: "POST",
               headers: { "Content-Type": "application/json" },
