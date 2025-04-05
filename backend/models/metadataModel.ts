@@ -6,6 +6,8 @@ export interface IMetadata extends Document {
   name: string;
   subscribers: number;
   image: string;
+  viewers: number;
+  description: string;
 }
 
 const metadataSchema: Schema<IMetadata> = new Schema({
@@ -14,6 +16,8 @@ const metadataSchema: Schema<IMetadata> = new Schema({
   name: { type: String, required: true },
   subscribers: { type: Number, required: true },
   image: { type: String, required: true },
+  viewers: { type: Number, required: false },
+  description: { type: String, required: false },
 });
 
 export default mongoose.model<IMetadata>("Metadata", metadataSchema);

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Gift, Users } from "lucide-react";
 
 interface Streamer {
-  id: string;
+  _id: string;
   name: string;
   image: string;
   subscribers: number;
@@ -41,12 +41,12 @@ export function StreamerCard({ streamer }: StreamerCardProps) {
         </div>
       </CardContent>
       <CardFooter className="flex justify-between p-4 pt-0">
-        <Link href={`/streamers/${streamer.id}`}>
+        <Link href={`/streamers/${streamer._id}`}>
           <Button variant="outline" size="sm">
             View Profile
           </Button>
         </Link>
-        <Link href={`/donate/${streamer.id}`}>
+        <Link href={`/donate/${streamer._id}`}>
           <Button size="sm">
             <Gift className="h-4 w-4 mr-2" />
             Donate

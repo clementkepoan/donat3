@@ -6,6 +6,16 @@ import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/ui/toaster";
 import Link from "next/link";
 
+export type Streamer = {
+  _id: string;
+  name: string;
+  image: string;
+  subscribers: number;
+  public_address: string;
+  viewers: number;
+  description: string;
+};
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {

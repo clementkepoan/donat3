@@ -27,11 +27,20 @@ export const checkAddressLinked = async (req: Request, res: Response) => {
 };
 
 export const addMetadata = async (req: Request, res: Response) => {
-  const { id, public_address, name, subscribers, image } = req.body;
+  const { id, public_address, name, subscribers, image, viewers, description } =
+    req.body;
 
   console.log("addMetadata", req.body);
 
-  if (!id || !public_address || !name || !subscribers || !image) {
+  if (
+    !id ||
+    !public_address ||
+    !name ||
+    !subscribers ||
+    !image ||
+    !viewers ||
+    !description
+  ) {
     res.status(400).json({ message: "Missing required fields" });
     return;
   }
@@ -52,6 +61,8 @@ export const addMetadata = async (req: Request, res: Response) => {
       name,
       subscribers,
       image,
+      viewers,
+      description,
     });
     res.status(200).json({
       message: "User created successfully",
@@ -63,4 +74,52 @@ export const addMetadata = async (req: Request, res: Response) => {
   }
 };
 
-export const getStreamers = async;
+export const getStreamersMetadata = async (req: Request, res: Response) => {
+  const { amount, searchQuery } = req.body;
+  console.log("getStreamers", req.body);
+
+  if (!amount) {
+    res.status(400).json({ message: "Missing required fields" });
+    return;
+  }
+
+  try {
+    const streamers = await metadata
+      .find({
+        name: { $regex: searchQuery, $options: "i" },
+      })
+      .limit(amount);
+
+    res.status(200).json({
+      message: "Streamers fetched successfully",
+      streamers,
+    });
+  } catch (error) {
+    console.error("Error processing request:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getOneStreamerMetadata = async (req: Request, res: Response) => {
+  const { id } = req.body;
+  console.log("getOneStreamer", req.body);
+
+  if (!id) {
+    res.status(400).json({ message: "Missing required fields" });
+    return;
+  }
+
+  try {
+    const streamer = await metadata.findOne({
+      _id: id,
+    });
+
+    res.status(200).json({
+      message: "Streamer fetched successfully",
+      streamer,
+    });
+  } catch (error) {
+    console.error("Error processing request:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

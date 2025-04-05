@@ -6,15 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Users } from "lucide-react";
 import { StreamerCard } from "@/components/streamer-card";
-
-// Define the streamer type
-type Streamer = {
-  id: string;
-  name: string;
-  image: string;
-  subscribers: number;
-  public_address: string;
-};
+import { Streamer } from "@/app/layout";
 
 const limit = 4;
 
@@ -27,13 +19,15 @@ export default function DonatePage() {
   // Fetch streamers from API
   useEffect(() => {
     const fetchStreamers = async () => {
+      setLoading(true); // Set loading true when starting the fetch
       try {
-        const response = await fetch("http://localhost:8000/streamer/get", {
+        const response = await fetch("http://localhost:8000/metadata/get", {
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            amount: 4,
+            amount: limit,
+            searchQuery: "",
           }),
           method: "POST",
         });
@@ -41,10 +35,23 @@ export default function DonatePage() {
         const result = await response.json();
 
         if (response.ok) {
-          setStreamers(() => [...result.streamers]);
+          setStreamers(result.streamers || []);
+        } else {
+          toast({
+            title: "Error fetching streamers",
+            description: result.message || "Something went wrong.",
+            variant: "destructive",
+          });
         }
       } catch (error) {
         console.error("Error getting streamers:", error);
+        toast({
+          title: "Error",
+          description: "Could not fetch streamers. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false); // Set loading false when fetch is complete
       }
     };
 
@@ -54,13 +61,15 @@ export default function DonatePage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    setLoading(true); // Set loading true when starting the search
+
     try {
-      const response = await fetch("http://localhost:8000/streamer/get", {
+      const response = await fetch("http://localhost:8000/metadata/get", {
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: 4,
+          amount: limit,
           searchQuery,
         }),
         method: "POST",
@@ -69,10 +78,23 @@ export default function DonatePage() {
       const result = await response.json();
 
       if (response.ok) {
-        setStreamers(() => [...result.streamers]);
+        setStreamers(result.streamers || []);
+      } else {
+        toast({
+          title: "Error searching streamers",
+          description: result.message || "Something went wrong.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error getting streamers:", error);
+      toast({
+        title: "Error",
+        description: "Could not search streamers. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false); // Set loading false when search is complete
     }
   };
 
@@ -102,7 +124,10 @@ export default function DonatePage() {
         ) : streamers.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {streamers.map((streamer) => (
-              <StreamerCard key={streamer.id} streamer={streamer} />
+              <StreamerCard
+                key={streamer.public_address || streamer.name}
+                streamer={streamer}
+              />
             ))}
           </div>
         ) : (
