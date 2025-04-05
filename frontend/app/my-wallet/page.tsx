@@ -14,50 +14,31 @@ import {
 import { Loader2, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
-// Mock NFT data
-const mockNFTs = [
-  {
-    id: "1",
-    name: "Crypto Streamer #001",
-    image: "/placeholder.svg?height=300&width=300",
-    collection: "Crypto Streamers",
-    tokenId: "1",
-    contractAddress: "0x1234567890123456789012345678901234567890",
-  },
-  {
-    id: "2",
-    name: "Donation Badge #42",
-    image: "/placeholder.svg?height=300&width=300",
-    collection: "Donation Badges",
-    tokenId: "42",
-    contractAddress: "0x0987654321098765432109876543210987654321",
-  },
-];
+type NFT = {
+  title: string;
+  tokenId: string;
+  contract: string;
+  image: string;
+};
 
-// Mock token data
-const mockTokens = [
-  {
-    symbol: "ETH",
-    name: "Ethereum",
-    balance: "1.245",
-    usdValue: "2,490.00",
-    icon: "/placeholder.svg?height=32&width=32",
-  },
-  {
-    symbol: "USDC",
-    name: "USD Coin",
-    balance: "150.00",
-    usdValue: "150.00",
-    icon: "/placeholder.svg?height=32&width=32",
-  },
-];
+type Token = {
+  name: string;
+  symbol: string;
+  balance: string;
+  decimals: number;
+  icon: string;
+};
+
+const ALCHEMY_API_KEY = "bKzGFZK5M24wNWsgyLKuJXykcsGIEzcv";
 
 export default function MyWalletPage() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [nfts, setNfts] = useState(mockNFTs);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [nfts, setNfts] = useState<NFT[]>([]);
 
   useEffect(() => {
     const checkWallet = async () => {
@@ -68,62 +49,117 @@ export default function MyWalletPage() {
           if (accounts.length > 0) {
             setWalletAddress(accounts[0]);
             setWalletConnected(true);
-            await loadWalletData(accounts[0]);
           }
         }
       } catch (error) {
         console.error("Error checking wallet:", error);
       } finally {
-        setInitialCheckDone(true); // Move this to `finally` to ensure it runs once
-        setIsLoading(false); // Ensure loading state is updated after data is fetched
+        setInitialCheckDone(true);
+        setIsLoading(false);
       }
     };
 
     checkWallet();
   }, []);
 
-  const loadWalletData = async (address: string) => {
-    setIsLoading(true);
+  useEffect(() => {
+    const fetchNFTs = async () => {
+      if (!walletAddress) return;
 
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // For the prototype, we'll just use the mock data
-      // In a real app, you'd set the actual data from the API responses
-    } catch (error) {
-      console.error("Error loading wallet data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleWalletConnected = async (connected: boolean) => {
-    if (connected) {
-      setIsLoading(true);
       try {
-        const { ethereum } = window as any;
-        const accounts = await ethereum.request({ method: "eth_accounts" });
-        if (accounts.length > 0) {
-          setWalletAddress(accounts[0]);
-          setWalletConnected(true);
-          await loadWalletData(accounts[0]);
+        setIsLoading(true);
+        const url = `https://polygon-mainnet.g.alchemy.com/nft/v2/${ALCHEMY_API_KEY}/getNFTs?owner=${walletAddress}&withMetadata=true`;
+        const res = await fetch(url);
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
         }
-      } catch (error) {
-        console.error("Error connecting wallet:", error);
+
+        const data = await res.json();
+        if (data?.ownedNfts) {
+          const items: NFT[] = data.ownedNfts.map((nft: any) => ({
+            title: nft.title || "Untitled",
+            tokenId: nft.id.tokenId,
+            contract: nft.contract.address,
+            image: nft.media?.[0]?.gateway || "",
+          }));
+          setNfts(items);
+        }
+        console.log("Fetched NFTs:", data);
+      } catch (error: any) {
+        console.error("Error fetching NFTs:", error.message);
+      } finally {
         setIsLoading(false);
       }
-    } else {
-      setWalletAddress(null);
-      setWalletConnected(false);
-    }
-  };
+    };
 
-  const formatAddress = (address: string) => {
-    return `${address.substring(0, 6)}...${address.substring(
-      address.length - 4
-    )}`;
-  };
+    const fetchTokens = async () => {
+      if (!walletAddress) return;
+
+      try {
+        setIsLoading(true);
+        // Use the correct API endpoint for Alchemy token balances
+        const url = `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}/`;
+
+        const requestOptions = {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "alchemy_getTokenBalances",
+            params: ["0x0e5FA4Fc5E1776a8A618b620F2e91E80c4f96768", "erc20"],
+          }),
+        };
+
+        const res = await fetch(url, requestOptions);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log(data);
+        if (data?.result?.tokenBalances) {
+          // Fetch metadata for each token
+          const tokenBalances = data.result.tokenBalances;
+          const tokenDataPromises = tokenBalances.map(async (token: any) => {
+            const metadataUrl = `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}/`;
+            const metadataOptions = {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "alchemy_getTokenMetadata",
+                params: [token.contractAddress],
+              }),
+            };
+
+            const metadataRes = await fetch(metadataUrl, metadataOptions);
+            const metadata = await metadataRes.json();
+            return {
+              name: metadata.result.name || "Unknown Token",
+              symbol: metadata.result.symbol || "???",
+              balance: token.tokenBalance,
+              decimals: metadata.result.decimals || 18,
+              icon: `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${token.contractAddress}/logo.png`,
+            };
+          });
+
+          const items = await Promise.all(tokenDataPromises);
+          console.log("Fetched tokens:", items);
+          setTokens(items);
+        }
+      } catch (error: any) {
+        console.error("Error fetching tokens:", error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNFTs();
+    fetchTokens();
+  }, [walletAddress]);
 
   const renderContent = () => {
     if (!initialCheckDone || isLoading) {
@@ -168,7 +204,7 @@ export default function MyWalletPage() {
           </Card>
         </div>
 
-        <Tabs defaultValue="tokens">
+        <Tabs defaultValue="nfts">
           <TabsList className="mb-4">
             <TabsTrigger value="tokens">Tokens</TabsTrigger>
             <TabsTrigger value="nfts">NFTs</TabsTrigger>
@@ -176,8 +212,8 @@ export default function MyWalletPage() {
 
           <TabsContent value="tokens">
             <div className="space-y-4">
-              {mockTokens.map((token) => (
-                <Card key={token.symbol}>
+              {tokens.map((token, i) => (
+                <Card key={i}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -198,10 +234,9 @@ export default function MyWalletPage() {
                       </div>
                       <div className="text-right">
                         <p className="font-medium">
-                          {token.balance} {token.symbol}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          ${token.usdValue}
+                          {parseInt(token.balance, 16) /
+                            Math.pow(10, token.decimals)}{" "}
+                          {token.symbol}
                         </p>
                       </div>
                     </div>
@@ -213,29 +248,31 @@ export default function MyWalletPage() {
 
           <TabsContent value="nfts">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {nfts.map((nft) => (
-                <Card key={nft.id}>
+              {nfts.map((nft, index) => (
+                <Card key={`${nft.contract}-${nft.tokenId}-${index}`}>
                   <CardContent className="p-0">
                     <div className="relative w-full aspect-square">
                       <Image
                         src={nft.image || "/placeholder.svg"}
-                        alt={nft.name}
+                        alt={nft.title}
                         fill
                         className="object-cover rounded-t-md"
                       />
                     </div>
                   </CardContent>
                   <CardFooter className="flex flex-col items-start p-4">
-                    <h3 className="font-medium">{nft.name}</h3>
+                    <h3 className="font-medium">{nft.title}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {nft.collection}
+                      Contract: {nft.contract}
                     </p>
                     <div className="flex justify-between w-full mt-2">
                       <span className="text-xs text-muted-foreground">
-                        Token ID: {nft.tokenId}
+                        Token ID: {parseInt(nft.tokenId, 16)}
                       </span>
                       <a
-                        href={`https://etherscan.io/token/${nft.contractAddress}?a=${nft.tokenId}`}
+                        href={`https://etherscan.io/token/${
+                          nft.contract
+                        }?a=${parseInt(nft.tokenId, 16)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-primary hover:underline flex items-center gap-1"
@@ -258,7 +295,7 @@ export default function MyWalletPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h1 className="text-2xl font-bold">My Wallet</h1>
-          <WalletConnect onConnected={handleWalletConnected} />
+          <WalletConnect onConnected={setWalletConnected} />
         </div>
 
         {renderContent()}

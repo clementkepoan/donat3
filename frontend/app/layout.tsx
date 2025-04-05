@@ -23,6 +23,9 @@ export const metadata = {
   description: "A platform to donate crypto to streamers",
 };
 
+const GOOGLE_CLIENT_ID =
+  "24120971675-c388mtn729elp3pemhqkvtj0vf5togj9.apps.googleusercontent.com";
+
 export default function RootLayout({
   children,
 }: {
@@ -33,10 +36,8 @@ export default function RootLayout({
       <body className={inter.className}>
         <div className="relative flex min-h-screen flex-col">
           <SiteHeader />
-          <GoogleOAuthProvider
-            clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}
-          >
-            {children}
+          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <div className="flex-1">{children}</div>
           </GoogleOAuthProvider>
           <footer className="border-t py-4">
             <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
