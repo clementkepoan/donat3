@@ -140,7 +140,7 @@ export const getIDByAddress = async (req: Request, res: Response) => {
 
     res.status(200).json({
       message: "Streamer fetched successfully",
-      streamer,
+      id: streamer?._id,
     });
   } catch (error) {
     console.error("Error processing request:", error);

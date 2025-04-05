@@ -18,6 +18,7 @@ import {
   Gift,
   Sparkles,
   Wallet,
+  AlertTriangle,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
@@ -25,6 +26,147 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { Streamer } from "@/app/layout";
 import { io, Socket } from "socket.io-client";
+import { ethers } from "ethers";
+
+// Contract ABI for PeerToPeerWithCommission
+const CONTRACT_ABI = [
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_commissionRate",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "constructor",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "CommissionClaimed",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "sender",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "receiver",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "commission",
+        type: "uint256",
+      },
+    ],
+    name: "Transaction",
+    type: "event",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_newRate",
+        type: "uint256",
+      },
+    ],
+    name: "changeCommissionRate",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "claimCommission",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "commissionRate",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "owner",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "totalCommission",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address payable",
+        name: "_receiver",
+        type: "address",
+      },
+    ],
+    name: "transfer",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+];
+
+// Contract address of the deployed PeerToPeerWithCommission contract
+const CONTRACT_ADDRESS = "0x70950b30978fb9917B20dE0fd96a62e99ac9871C"; // Replace with actual contract address
 
 export default function StreamerDonatePage() {
   const params = useParams();
@@ -40,6 +182,8 @@ export default function StreamerDonatePage() {
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [networkError, setNetworkError] = useState<string | null>(null);
+  const [commissionRate, setCommissionRate] = useState<number | null>(null);
 
   useEffect(() => {
     async function getStreamerData() {
@@ -88,7 +232,87 @@ export default function StreamerDonatePage() {
     }
 
     getStreamerData();
-  }, []);
+    checkNetwork();
+    getCommissionRate();
+  }, [id]);
+
+  // Check if user is on Flow EVM testnet
+  const checkNetwork = async () => {
+    try {
+      if (window.ethereum) {
+        const chainId = await window.ethereum.request({
+          method: "eth_chainId",
+        });
+        if (chainId !== "0x221") {
+          // Flow EVM testnet chainId is 545 (0x221 in hex)
+          setNetworkError("Please connect to Flow EVM Testnet to donate");
+        } else {
+          setNetworkError(null);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking network:", error);
+    }
+  };
+
+  // Switch to Flow EVM Testnet
+  const switchToFlowNetwork = async () => {
+    try {
+      if (!window.ethereum) return;
+
+      try {
+        // Try to switch to Flow testnet
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0x221" }], // 545 in hex
+        });
+        setNetworkError(null);
+      } catch (switchError: any) {
+        // This error code indicates that the chain has not been added to MetaMask
+        if (switchError.code === 4902) {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: "0x221", // 545 in hex
+                chainName: "Flow EVM Testnet",
+                nativeCurrency: {
+                  name: "FLOW",
+                  symbol: "FLOW",
+                  decimals: 18,
+                },
+                rpcUrls: ["https://testnet.evm.nodes.onflow.org"],
+                blockExplorerUrls: ["https://testnet-evm.flowscan.io"],
+              },
+            ],
+          });
+          setNetworkError(null);
+        } else {
+          console.error("Failed to switch network:", switchError);
+        }
+      }
+    } catch (error) {
+      console.error("Error switching network:", error);
+    }
+  };
+
+  // Get commission rate from contract
+  const getCommissionRate = async () => {
+    try {
+      if (window.ethereum) {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          CONTRACT_ABI,
+          provider
+        );
+        const rate = await contract.commissionRate();
+        setCommissionRate(Number(rate));
+      }
+    } catch (error) {
+      console.error("Error getting commission rate:", error);
+    }
+  };
 
   const handleDonate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +327,15 @@ export default function StreamerDonatePage() {
     if (!walletConnected) {
       toast({
         title: "Please connect your wallet first",
+      });
+      return;
+    }
+
+    if (networkError) {
+      toast({
+        title: "Network Error",
+        description: "Please switch to Flow EVM Testnet before donating",
+        variant: "destructive",
       });
       return;
     }
@@ -128,22 +361,33 @@ export default function StreamerDonatePage() {
         throw new Error("Streamer wallet address not available");
       }
 
-      const amountInWei = BigInt(Number.parseFloat(donationAmount) * 1e18);
+      // Create ethers provider and contract instance
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        CONTRACT_ABI,
+        signer
+      );
 
-      const transactionParameters = {
-        from: fromAddress,
-        to: toAddress,
-        value: `0x${amountInWei.toString(16)}`,
-        gas: "0x5208",
-      };
+      // Convert donation amount to wei
+      const amountInWei = ethers.parseEther(donationAmount);
 
-      const txHash = await ethereum.request({
-        method: "eth_sendTransaction",
-        params: [transactionParameters],
+      // Sign message to confirm the transaction
+      await signer.signMessage(
+        `I confirm donating ${donationAmount} FLOW to ${streamer.name}`
+      );
+
+      // Call the contract's transfer function
+      const tx = await contract.transfer(toAddress, {
+        value: amountInWei,
       });
 
-      setTransactionHash(txHash);
+      // Wait for transaction to be mined
+      const receipt = await tx.wait();
+      setTransactionHash(receipt.hash);
 
+      // Record donation in backend
       await fetch("/api/donations", {
         method: "POST",
         headers: {
@@ -153,7 +397,7 @@ export default function StreamerDonatePage() {
           streamerId: streamer._id,
           amount: donationAmount,
           message: donationMessage,
-          transactionHash: txHash,
+          transactionHash: receipt.hash,
           senderAddress: fromAddress,
         }),
       });
@@ -163,7 +407,7 @@ export default function StreamerDonatePage() {
         description: `You've successfully donated to ${streamer.name}`,
       });
 
-      // send data to socket server using socket io
+      // Send data to socket server for alerts
       const socket = io("http://localhost:8000", {
         transports: ["websocket"],
       });
@@ -250,6 +494,23 @@ export default function StreamerDonatePage() {
           </Link>
         </div>
 
+        {networkError && (
+          <Alert className="mb-6 border-yellow-500/20 bg-yellow-500/5">
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            <AlertDescription className="text-sm text-gray-400 flex justify-between items-center w-full">
+              <span>{networkError}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20"
+                onClick={switchToFlowNetwork}
+              >
+                Switch Network
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="border border-[#2A2A2E] rounded-2xl overflow-hidden mb-8 shadow-lg bg-[#18181D]">
           <div className="bg-[#121217] h-48 relative">
             <Image
@@ -316,7 +577,7 @@ export default function StreamerDonatePage() {
               <form onSubmit={handleDonate} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="amount" className="text-base font-medium">
-                    Amount (MATIC)
+                    Amount (FLOW)
                   </Label>
                   <div className="relative">
                     <Input
@@ -370,7 +631,7 @@ export default function StreamerDonatePage() {
                 <Button
                   type="submit"
                   className="w-full py-6 text-lg font-medium rounded-xl bg-[#10B981] text-white hover:bg-[#0E9E6E] shadow-lg hover:shadow-[#10B981]/25 transition-all duration-200"
-                  disabled={isDonating || !walletConnected}
+                  disabled={isDonating || !walletConnected || !!networkError}
                 >
                   {isDonating ? (
                     <>
@@ -394,12 +655,12 @@ export default function StreamerDonatePage() {
                       Donation successful!
                     </p>
                     <a
-                      href={`https://etherscan.io/tx/${transactionHash}`}
+                      href={`https://testnet-evm.flowscan.io/tx/${transactionHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[#10B981] hover:underline flex items-center justify-center gap-1 mt-2 font-medium"
                     >
-                      View transaction on Etherscan{" "}
+                      View transaction on Flow Explorer{" "}
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   </div>
@@ -418,29 +679,35 @@ export default function StreamerDonatePage() {
               <Alert className="border-[#10B981]/20 bg-[#10B981]/5">
                 <AlertCircle className="h-4 w-4 text-[#10B981]" />
                 <AlertDescription className="text-sm text-gray-400">
-                  Donations are sent directly to {streamer.name}'s wallet with{" "}
-                  <span className="font-bold text-white">no platform fees</span>
-                  . Standard network transaction fees apply.
+                  Donations are sent directly to {streamer.name}'s wallet using
+                  our secure Flow EVM smart contract with a small platform fee.
                 </AlertDescription>
               </Alert>
 
               <div className="py-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-400">Platform Fee</span>
-                  <span className="font-medium text-[#10B981]">0%</span>
+                  <span className="font-medium text-[#10B981]">
+                    {commissionRate ? `${commissionRate}%` : "Loading..."}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-400">
                     Creator Receives
                   </span>
                   <span className="font-medium text-white">
-                    100% of donation
+                    {commissionRate ? `${100 - commissionRate}%` : "Loading..."}{" "}
+                    of donation
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-400">Payment Method</span>
+                  <span className="font-medium text-white">Flow (FLOW)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">Network</span>
                   <span className="font-medium text-white">
-                    Polygon (MATIC)
+                    Flow EVM Testnet
                   </span>
                 </div>
               </div>

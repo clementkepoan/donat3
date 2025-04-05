@@ -115,7 +115,29 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-black text-white p-8 flex flex-col items-center justify-center">
-      <div className="w-full max-w-md p-8 border border-zinc-800 rounded-lg bg-zinc-900 backdrop-blur-sm shadow-xl">
+      <div className="w-full max-w-md p-8 border border-zinc-800 rounded-lg bg-zinc-900 backdrop-blur-sm shadow-xl relative">
+        {/* X Button in the top right corner */}
+        <button
+          onClick={() => (window.location.href = "/")}
+          className="absolute top-4 right-4 p-1 rounded-full hover:bg-zinc-700 transition-colors"
+          aria-label="Close"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-zinc-400 hover:text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
         {isLinked ? (
           <div className="space-y-6">
             <div className="border-b border-zinc-800 pb-4">
@@ -132,26 +154,7 @@ export default function Profile() {
               <p className="text-zinc-300">Active connection established</p>
             </div>
 
-            <button
-              onClick={() => setLinked(false)}
-              className="w-full mt-6 py-3 px-4 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white transition-all duration-300 font-medium flex items-center justify-center group"
-            >
-              <span className="mr-2">Disconnect</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-            </button>
+            {/* Removed the disconnect button as requested */}
           </div>
         ) : (
           <div className="space-y-6">

@@ -1,14 +1,15 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { WalletConnect } from "@/components/wallet-connect";
-import { Loader2, Upload, ImageIcon } from "lucide-react";
+import { Loader2, Upload, ImageIcon, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
 import { ethers } from "ethers";
 import axios from "axios";
@@ -25,12 +26,80 @@ export default function MintPage() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [networkError, setNetworkError] = useState<string | null>(null);
 
   // Pinata API credentials
   const pinataApiKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
   const pinataSecretApiKey = process.env.NEXT_PUBLIC_PINATA_API_SECRET;
 
   const [isMinted, setIsMinted] = useState(false);
+
+  // Add useEffect to check network when component mounts
+  useEffect(() => {
+    checkNetwork();
+  }, []);
+
+  // Add network checking function
+  const checkNetwork = async () => {
+    try {
+      if (window.ethereum) {
+        const chainId = await window.ethereum.request({
+          method: "eth_chainId",
+        });
+        // Polygon Amoy testnet chainId is 80002 (0x13882 in hex)
+        if (chainId !== "0x13882") {
+          setNetworkError(
+            "Please connect to Polygon Amoy Testnet to mint NFTs"
+          );
+        } else {
+          setNetworkError(null);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking network:", error);
+    }
+  };
+
+  // Add network switching function
+  const switchToPolygonAmoy = async () => {
+    try {
+      if (!window.ethereum) return;
+
+      try {
+        // Try to switch to Polygon Amoy testnet
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0x13882" }], // 80002 in hex
+        });
+        setNetworkError(null);
+      } catch (switchError: any) {
+        // This error code indicates that the chain has not been added to MetaMask
+        if (switchError.code === 4902) {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: "0x13882",
+                chainName: "Polygon Amoy Testnet",
+                nativeCurrency: {
+                  name: "MATIC",
+                  symbol: "MATIC",
+                  decimals: 18,
+                },
+                rpcUrls: ["https://rpc-amoy.polygon.technology/"],
+                blockExplorerUrls: ["https://amoy.polygonscan.com/"],
+              },
+            ],
+          });
+          setNetworkError(null);
+        } else {
+          console.error("Failed to switch network:", switchError);
+        }
+      }
+    } catch (error) {
+      console.error("Error switching network:", error);
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -116,6 +185,16 @@ export default function MintPage() {
       return;
     }
 
+    // Add network error check
+    if (networkError) {
+      toast({
+        title: "Network Error",
+        description: "Please switch to Polygon Amoy Testnet before minting",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsMinting(true);
 
     try {
@@ -128,16 +207,16 @@ export default function MintPage() {
       console.log("Image uploaded to IPFS:", ipfsUri);
 
       const config = new MultiBaas.Configuration({
-        basePath: "https://tjyw6g7l7vavlmxhyedqewbtte.multibaas.com/api/v0",
+        basePath: "https://mnwgs2zohnd7fkhw7mkipjaazy.multibaas.com/api/v0",
         accessToken: process.env.NEXT_PUBLIC_MULTIBAAS_API_KEY,
       });
       console.log(process.env.NEXT_PUBLIC_MULTIBAAS_API_KEY);
       const contractsApi = new MultiBaas.ContractsApi(config);
 
       const chain = "ethereum";
-      const deployedAddressOrAlias = "mynftaa1";
-      const contractLabel = "mynftaa";
-      const contractMethod = "publicMint";
+      const deployedAddressOrAlias = "mynftamoy1";
+      const contractLabel = "mynftamoy";
+      const contractMethod = "mint";
       const account = await window.ethereum.request({
         method: "eth_requestAccounts",
       });
@@ -161,7 +240,7 @@ export default function MintPage() {
         // Check if the result contains transaction data
         if (resp.data.result && "tx" in resp.data.result) {
           signAndSendTransaction(formatTransaction(resp.data.result.tx));
-          console.log("Transaction data:\n", resp.data.result.tx);
+          //console.log("Transaction data:\n", resp.data.result.tx);
         } else {
           console.error(
             "No transaction data in the response:",
@@ -201,13 +280,20 @@ export default function MintPage() {
   function formatTransaction(txData: any) {
     const formattedTx = JSON.parse(JSON.stringify(txData));
 
-    // convert fields that need to be converted
+    // Convert fields that need to be converted
     // Handle BigInt conversion properly
     formattedTx.value = formattedTx.value
       ? BigInt(formattedTx.value).toString()
       : "0";
 
-    formattedTx.gasLimit = formattedTx.gas;
+    // Set a reasonable gasLimit if it's undefined (3000000 in hex)
+    if (!formattedTx.gasLimit && !formattedTx.gas) {
+      formattedTx.gasLimit = "0x2DC6C0"; // 3,000,000 gas units
+    } else if (formattedTx.gas && !formattedTx.gasLimit) {
+      formattedTx.gasLimit = formattedTx.gas;
+    }
+
+    // Delete the gas field as we're using gasLimit
     delete formattedTx.gas;
 
     // let the wallet decide on the following parameters:
@@ -218,6 +304,11 @@ export default function MintPage() {
     delete formattedTx.from;
     delete formattedTx.hash;
     return formattedTx;
+    //formattedTx.maxPriorityFeePerGas = "0x8F0D180";
+
+    //formattedTx.maxFeePerGas = "0x11E1A300"; // 3x the maxPriorityFeePerGas
+
+    // Log the formatted transaction for debugging
   }
 
   async function signAndSendTransaction(txData: any) {
@@ -268,6 +359,24 @@ export default function MintPage() {
             to the blockchain.
           </p>
         </div>
+
+        {/* Add network error alert */}
+        {networkError && (
+          <Alert className="border-yellow-500/20 bg-yellow-500/5">
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            <AlertDescription className="text-sm text-gray-400 flex justify-between items-center w-full">
+              <span>{networkError}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/20"
+                onClick={switchToPolygonAmoy}
+              >
+                Switch to Polygon Amoy
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="bg-gray-900 border border-gray-800 p-8 rounded-3xl shadow-2xl">
           <form onSubmit={handleMint} className="space-y-6">
@@ -348,7 +457,7 @@ export default function MintPage() {
             <Button
               type="submit"
               className="w-full bg-[#10B981] hover:bg-[#0D9668] text-black font-semibold tracking-wide"
-              disabled={isMinting || !walletConnected}
+              disabled={isMinting || !walletConnected || !!networkError}
             >
               {isMinting ? (
                 <>
@@ -364,10 +473,18 @@ export default function MintPage() {
             </Button>
 
             {isMinted && (
-              <div className="text-center text-sm mt-6">
+              <div className="text-center text-sm mt-6 p-4 bg-[#10B981]/10 border border-[#10B981]/20 rounded-xl">
                 <p className="font-medium text-green-400">
                   NFT minted successfully!
                 </p>
+                <a
+                  href={`https://amoy.polygonscan.com/`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#10B981] hover:underline flex items-center justify-center gap-1 mt-2 font-medium text-xs"
+                >
+                  View on Polygon Amoy Explorer
+                </a>
               </div>
             )}
           </form>

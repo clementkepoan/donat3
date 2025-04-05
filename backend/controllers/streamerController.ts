@@ -60,9 +60,23 @@ export const linkStreamerPlatform = async (req: Request, res: Response) => {
       subscribers,
       image,
     });
+
+    // Check if a streamer record exists for this public_address
+    let streamer = await Streamer.findOne({ public_address });
+
+    // If no streamer record exists, create one
+    if (!streamer) {
+      streamer = await Streamer.create({
+        display_name: streamername, // Use streamername as the display name
+        public_address,
+      });
+      console.log("Created new streamer record:", streamer);
+    }
+
     res.status(200).json({
-      message: "Metadata created successfully",
+      message: "Metadata created and linked to streamer successfully",
       metadata,
+      streamer,
     });
   } catch (error) {
     console.error("Error processing request:", error);

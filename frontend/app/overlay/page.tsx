@@ -22,7 +22,7 @@ import { useEffect, useState } from "react";
 
 export default function OverlayPage() {
   const { toast } = useToast();
-  const [id, setId] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
 
   const {
     accentColor,
@@ -70,7 +70,7 @@ export default function OverlayPage() {
       console.log("Response data:", data);
 
       if (response.ok) {
-        setId(data._id);
+        setUrl(`${window.location.origin}/overlay/donation/${data.id}`);
       } else {
         console.error("Error fetching ID:", data.error);
       }
@@ -79,8 +79,7 @@ export default function OverlayPage() {
   }, []);
 
   const handleCopyUrl = () => {
-    const overlayUrl = `${window.location.origin}/overlay/${id}`;
-    navigator.clipboard.writeText(overlayUrl);
+    navigator.clipboard.writeText(url!);
     toast({
       title: "URL copied to clipboard!",
       description: "Paste this in your streaming software",
@@ -278,7 +277,7 @@ export default function OverlayPage() {
 
               <div className="flex items-center gap-2">
                 <Input
-                  value={`${window.location.origin}/overlay/`}
+                  value={`${url}`}
                   readOnly
                   className="bg-gray-900/50 border-gray-700 font-mono text-sm"
                 />

@@ -66,7 +66,7 @@ export default function MyWalletPage() {
 
       try {
         setIsLoading(true);
-        const url = `https://polygon-mainnet.g.alchemy.com/nft/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}/getNFTs?owner=${walletAddress}&withMetadata=true`;
+        const url = `https://polygon-amoy.g.alchemy.com/nft/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}/getNFTsForOwner?owner=${walletAddress}&withMetadata=false`;
         const res = await fetch(url);
 
         if (!res.ok) {
