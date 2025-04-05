@@ -1,104 +1,112 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Wallet } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Wallet } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface WalletConnectProps {
-  onConnected?: (connected: boolean) => void
+  onConnected?: (connected: boolean) => void;
 }
 
 export function WalletConnect({ onConnected }: WalletConnectProps) {
-  const [account, setAccount] = useState<string | null>(null)
-  const [isConnecting, setIsConnecting] = useState(false)
-  const { toast } = useToast()
+  const [account, setAccount] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const { toast } = useToast();
 
   const connectWallet = async () => {
     try {
-      setIsConnecting(true)
-      const { ethereum } = window as any
+      setIsConnecting(true);
+      const { ethereum } = window as any;
 
       if (!ethereum) {
         toast({
           title: "MetaMask not found",
           description: "Please install MetaMask browser extension",
-        })
-        return
+        });
+        return;
       }
 
-      const accounts = await ethereum.request({ method: "eth_requestAccounts" })
+      const accounts = await ethereum.request({
+        method: "eth_requestAccounts",
+      });
 
       if (accounts.length > 0) {
-        setAccount(accounts[0])
+        setAccount(accounts[0]);
         toast({
           title: "Wallet connected",
-        })
+        });
 
         if (onConnected) {
-          onConnected(true)
+          onConnected(true);
         }
       }
     } catch (error: any) {
-      console.error(error)
+      console.error(error);
       if (onConnected) {
-        onConnected(false)
+        onConnected(false);
       }
     } finally {
-      setIsConnecting(false)
+      setIsConnecting(false);
     }
-  }
+  };
 
   useEffect(() => {
     const checkWallet = async () => {
-      const { ethereum } = window as any
+      const { ethereum } = window as any;
       if (ethereum) {
-        const accounts = await ethereum.request({ method: "eth_accounts" })
+        const accounts = await ethereum.request({ method: "eth_accounts" });
         if (accounts.length > 0) {
-          setAccount(accounts[0])
+          setAccount(accounts[0]);
           if (onConnected) {
-            onConnected(true)
+            onConnected(true);
           }
         } else if (onConnected) {
-          onConnected(false)
+          onConnected(false);
         }
       }
-    }
+    };
 
-    checkWallet()
+    checkWallet();
 
     // Listen for account changes
-    const { ethereum } = window as any
+    const { ethereum } = window as any;
     if (ethereum) {
       ethereum.on("accountsChanged", (accounts: string[]) => {
         if (accounts.length > 0) {
-          setAccount(accounts[0])
+          setAccount(accounts[0]);
           if (onConnected) {
-            onConnected(true)
+            onConnected(true);
           }
         } else {
-          setAccount(null)
+          setAccount(null);
           if (onConnected) {
-            onConnected(false)
+            onConnected(false);
           }
         }
-      })
+      });
     }
 
     return () => {
-      const { ethereum } = window as any
+      const { ethereum } = window as any;
       if (ethereum) {
-        ethereum.removeListener("accountsChanged", () => {})
+        ethereum.removeListener("accountsChanged", () => {});
       }
-    }
-  }, [onConnected])
+    };
+  }, [onConnected]);
 
   return (
     <div>
       {account ? (
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-black bg-white border-gray-300"
+        >
           <Wallet className="h-4 w-4 mr-2" />
-          {`${account.substring(0, 6)}...${account.substring(account.length - 4)}`}
+          {`${account.substring(0, 6)}...${account.substring(
+            account.length - 4
+          )}`}
         </Button>
       ) : (
         <Button onClick={connectWallet} disabled={isConnecting} size="sm">
@@ -107,6 +115,5 @@ export function WalletConnect({ onConnected }: WalletConnectProps) {
         </Button>
       )}
     </div>
-  )
+  );
 }
-

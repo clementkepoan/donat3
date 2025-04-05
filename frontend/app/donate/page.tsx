@@ -99,17 +99,19 @@ export default function DonatePage() {
   };
 
   return (
-    <main className="py-8">
+    <main className="py-8 bg-gradient-to-br from-[#0E0E12] via-[#101014] to-[#0E0E12] min-h-screen text-white">
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <h1 className="text-2xl font-bold">Find a Streamer to Support</h1>
+          <h1 className="text-2xl font-bold text-white">
+            Find a Streamer to Support
+          </h1>
           <form onSubmit={handleSearch} className="w-full md:w-auto">
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
               <Input
                 type="search"
                 placeholder="Search streamers..."
-                className="pl-8 w-full md:w-[250px]"
+                className="pl-8 w-full md:w-[250px] bg-[#18181D] text-white border border-[#2A2A2E] placeholder-gray-400"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -119,7 +121,7 @@ export default function DonatePage() {
 
         {loading ? (
           <div className="text-center py-12">
-            <p>Loading streamers...</p>
+            <p className="text-gray-400">Loading streamers...</p>
           </div>
         ) : streamers.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -131,10 +133,12 @@ export default function DonatePage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 border rounded-lg">
-            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-medium mb-2">No streamers found</h2>
-            <p className="text-muted-foreground mb-4">
+          <div className="text-center py-12 border border-[#2A2A2E] rounded-lg bg-[#18181D]">
+            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h2 className="text-xl font-medium text-white mb-2">
+              No streamers found
+            </h2>
+            <p className="text-gray-400 mb-4">
               Try searching with different keywords
             </p>
           </div>

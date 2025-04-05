@@ -18,9 +18,9 @@ interface StreamerCardProps {
 
 export function StreamerCard({ streamer }: StreamerCardProps) {
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-0">
-        <div className="flex items-center gap-4 p-4">
+    <Card className="bg-[#18181D] border border-[#2A2A2E] text-white rounded-2xl overflow-hidden shadow-lg hover:border-[#10B981] transition-colors">
+      <CardContent className="p-5 pb-2">
+        <div className="flex items-center gap-4">
           <div className="relative h-16 w-16 flex-shrink-0">
             <Image
               src={streamer.image || "/placeholder.svg"}
@@ -31,23 +31,31 @@ export function StreamerCard({ streamer }: StreamerCardProps) {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-lg truncate">{streamer.name}</h3>
+              <h3 className="font-bold text-lg truncate text-white">
+                {streamer.name}
+              </h3>
             </div>
-            <div className="flex items-center mt-1 text-xs text-muted-foreground">
-              <Users className="h-3 w-3 mr-1" />
+            <div className="flex items-center mt-1 text-xs text-gray-400">
+              <Users className="h-3 w-3 mr-1 text-[#10B981]" />
               <span>{streamer.subscribers.toLocaleString()} subscribers</span>
             </div>
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between p-4 pt-0">
+      <CardFooter className="flex justify-between px-5 pb-5 pt-2">
         <Link href={`/streamers/${streamer._id}`}>
-          <Button variant="outline" size="sm">
+          <Button
+            size="sm"
+            className="bg-[#2A2A2E] hover:bg-[#10B981] text-white hover:text-black border border-[#2A2A2E]"
+          >
             View Profile
           </Button>
         </Link>
         <Link href={`/donate/${streamer._id}`}>
-          <Button size="sm">
+          <Button
+            size="sm"
+            className="bg-[#10B981] hover:bg-[#0D9668] text-black"
+          >
             <Gift className="h-4 w-4 mr-2" />
             Donate
           </Button>

@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,6 @@ export default function MintPage() {
       const file = e.target.files[0];
       setImageFile(file);
 
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -58,15 +56,8 @@ export default function MintPage() {
     setIsMinting(true);
 
     try {
-      // In a real implementation, you would:
-      // 1. Upload the image to IPFS
-      // 2. Create metadata and upload to IPFS
-      // 3. Call a smart contract to mint the NFT
-
-      // Simulate minting process
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Mock transaction hash
       const mockTxHash =
         "0x" +
         Array(64)
@@ -94,16 +85,24 @@ export default function MintPage() {
   };
 
   return (
-    <main className="py-8">
-      <div className="max-w-md mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Mint an NFT</h1>
+    <main className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-black via-gray-900 to-black min-h-screen text-white font-sans">
+      <div className="max-w-3xl mx-auto space-y-10">
+        <div className="text-center">
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-[#2eb95c] to-[#5fa48d] bg-clip-text text-transparent mb-3">
+            Mint Your NFT
+          </h1>
+          <p className="text-gray-400 text-sm max-w-md mx-auto">
+            Upload your image, customize the details, and mint your NFT directly
+            to the blockchain.
+          </p>
+        </div>
 
-        <div className="border rounded p-4">
-          <form onSubmit={handleMint} className="space-y-4">
+        <div className="bg-gray-900 border border-gray-800 p-8 rounded-3xl shadow-2xl">
+          <form onSubmit={handleMint} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="nftImage">NFT Image</Label>
               <div
-                className="flex items-center justify-center border-2 border-dashed rounded-md p-4 cursor-pointer"
+                className="flex items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer bg-gray-800 hover:bg-gray-700 transition"
                 onClick={() => document.getElementById("nftImage")?.click()}
               >
                 {imagePreview ? (
@@ -116,11 +115,9 @@ export default function MintPage() {
                     />
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center p-4">
-                    <ImageIcon className="h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Click to upload image
-                    </p>
+                  <div className="flex flex-col items-center p-4 text-gray-400">
+                    <ImageIcon className="h-10 w-10 mb-2" />
+                    <p className="text-sm">Click to upload image</p>
                   </div>
                 )}
                 <input
@@ -142,6 +139,7 @@ export default function MintPage() {
                 value={nftName}
                 onChange={(e) => setNftName(e.target.value)}
                 required
+                className="bg-gray-800 border-gray-700"
               />
             </div>
 
@@ -152,7 +150,8 @@ export default function MintPage() {
                 placeholder="Describe your NFT"
                 value={nftDescription}
                 onChange={(e) => setNftDescription(e.target.value)}
-                rows={2}
+                rows={3}
+                className="bg-gray-800 border-gray-700"
               />
             </div>
 
@@ -163,19 +162,20 @@ export default function MintPage() {
                 placeholder="Leave empty to mint to your wallet"
                 value={recipientAddress}
                 onChange={(e) => setRecipientAddress(e.target.value)}
+                className="bg-gray-800 border-gray-700"
               />
-              <p className="text-xs text-muted-foreground">
-                If left empty, the NFT will be minted to your connected wallet
+              <p className="text-xs text-gray-400">
+                If left empty, the NFT will be minted to your connected wallet.
               </p>
             </div>
 
-            <div className="flex justify-center mb-2">
+            <div className="flex justify-center">
               <WalletConnect onConnected={setWalletConnected} />
             </div>
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-[#10B981] hover:bg-[#0D9668] text-black font-semibold tracking-wide"
               disabled={isMinting || !walletConnected}
             >
               {isMinting ? (
@@ -192,13 +192,15 @@ export default function MintPage() {
             </Button>
 
             {transactionHash && (
-              <div className="text-center text-sm">
-                <p className="font-medium">NFT minted successfully!</p>
+              <div className="text-center text-sm mt-6">
+                <p className="font-medium text-green-400">
+                  NFT minted successfully!
+                </p>
                 <a
                   href={`https://etherscan.io/tx/${transactionHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline"
+                  className="text-blue-400 hover:underline"
                 >
                   View on Etherscan
                 </a>

@@ -31,29 +31,26 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="relative flex min-h-screen flex-col">
+        <div className="relative flex min-h-screen flex-col bg-[#0E0E12] text-white">
           <SiteHeader />
           <GoogleOAuthProvider
-            clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}
+            clientId={
+              process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+              "24120971675-c388mtn729elp3pemhqkvtj0vf5togj9.apps.googleusercontent.com"
+            }
           >
             {children}
           </GoogleOAuthProvider>
-          <footer className="border-t py-4">
-            <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
-              <p className="text-center text-sm text-muted-foreground md:text-left">
+          <footer className="border-t border-[#2A2A2E] bg-[#121217] py-6 mt-12">
+            <div className="container flex flex-col items-center justify-between gap-4 md:flex-row text-sm text-gray-400">
+              <p className="text-center md:text-left">
                 &copy; {new Date().getFullYear()} Donat3. All rights reserved.
               </p>
               <div className="flex gap-4">
-                <Link
-                  href="/terms"
-                  className="text-sm text-muted-foreground hover:underline"
-                >
+                <Link href="/terms" className="hover:text-[#10B981]">
                   Terms
                 </Link>
-                <Link
-                  href="/privacy"
-                  className="text-sm text-muted-foreground hover:underline"
-                >
+                <Link href="/privacy" className="hover:text-[#10B981]">
                   Privacy
                 </Link>
               </div>

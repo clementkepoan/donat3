@@ -71,7 +71,7 @@ export default function OverlayPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-2">
           <Zap className="h-6 w-6 text-[#10B981]" />
-          <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-cyan-500">
+          <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r text-white">
             Web3 Overlay Creator
           </h1>
         </div>
