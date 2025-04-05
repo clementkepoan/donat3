@@ -10,6 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 import { WalletConnect } from "@/components/wallet-connect";
 import { Loader2, Upload, ImageIcon } from "lucide-react";
 import Image from "next/image";
+import { ethers } from "ethers";
+import axios from "axios";
+
+import * as MultiBaas from "@curvegrid/multibaas-sdk";
+import { isAxiosError } from "axios";
 
 export default function MintPage() {
   const { toast } = useToast();
@@ -20,7 +25,12 @@ export default function MintPage() {
   const [walletConnected, setWalletConnected] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [transactionHash, setTransactionHash] = useState<string | null>(null);
+
+  // Pinata API credentials
+  const pinataApiKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
+  const pinataSecretApiKey = process.env.NEXT_PUBLIC_PINATA_API_SECRET;
+
+  const [isMinted, setIsMinted] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -34,6 +44,59 @@ export default function MintPage() {
       reader.readAsDataURL(file);
     }
   };
+
+  async function uploadImageToPinata(file: File) {
+    try {
+      console.log("Starting upload to Pinata...");
+
+      // Create form data for Pinata upload
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Add metadata
+      const metadata = JSON.stringify({
+        name: nftName,
+        description: nftDescription,
+      });
+      formData.append("pinataMetadata", metadata);
+
+      // Add options (optional)
+      const options = JSON.stringify({
+        cidVersion: 0,
+      });
+      formData.append("pinataOptions", options);
+
+      // Upload file to Pinata
+      const response = await axios.post(
+        "https://api.pinata.cloud/pinning/pinFileToIPFS",
+        formData,
+        {
+          headers: {
+            "Content-Type": `multipart/form-data; boundary=${
+              (formData as any)._boundary
+            }`,
+            pinata_api_key: pinataApiKey,
+            pinata_secret_api_key: pinataSecretApiKey,
+          },
+        }
+      );
+
+      console.log("Pinata upload response:", response.data);
+
+      // Format the IPFS URI
+      const ipfsHash = response.data.IpfsHash;
+      const ipfsUri = `ipfs://${ipfsHash}`;
+      console.log("IPFS URI:", ipfsUri);
+
+      return ipfsUri;
+    } catch (error) {
+      console.error("Error uploading to Pinata:", error);
+      if (isAxiosError(error) && error.response) {
+        console.error("Pinata API error:", error.response.data);
+      }
+      throw error;
+    }
+  }
 
   const handleMint = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,22 +119,73 @@ export default function MintPage() {
     setIsMinting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Upload image to IPFS via Pinata
+      const ipfsUri = await uploadImageToPinata(imageFile);
+      if (!ipfsUri) {
+        throw new Error("Failed to upload image to IPFS");
+      }
 
-      const mockTxHash =
-        "0x" +
-        Array(64)
-          .fill(0)
-          .map(() => Math.floor(Math.random() * 16).toString(16))
-          .join("");
+      console.log("Image uploaded to IPFS:", ipfsUri);
 
-      setTransactionHash(mockTxHash);
+      const config = new MultiBaas.Configuration({
+        basePath: "https://tjyw6g7l7vavlmxhyedqewbtte.multibaas.com/api/v0",
+        accessToken: process.env.NEXT_PUBLIC_MULTIBAAS_API_KEY,
+      });
+      console.log(process.env.NEXT_PUBLIC_MULTIBAAS_API_KEY);
+      const contractsApi = new MultiBaas.ContractsApi(config);
+
+      const chain = "ethereum";
+      const deployedAddressOrAlias = "mynftaa1";
+      const contractLabel = "mynftaa";
+      const contractMethod = "publicMint";
+      const account = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const accountAddress = account[0];
+
+      const payload: MultiBaas.PostMethodArgs = {
+        args: [accountAddress, ipfsUri, nftName, nftDescription],
+        from: accountAddress,
+      };
+
+      try {
+        const resp = await contractsApi.callContractFunction(
+          chain,
+          deployedAddressOrAlias,
+          contractLabel,
+          contractMethod,
+          payload
+        );
+        console.log("Function call result:\n", resp.data.result);
+
+        // Check if the result contains transaction data
+        if (resp.data.result && "tx" in resp.data.result) {
+          signAndSendTransaction(formatTransaction(resp.data.result.tx));
+          console.log("Transaction data:\n", resp.data.result.tx);
+        } else {
+          console.error(
+            "No transaction data in the response:",
+            resp.data.result
+          );
+          throw new Error("No transaction data available to send");
+        }
+      } catch (e) {
+        if (isAxiosError(e) && e.response?.data) {
+          console.log(
+            `MultiBaas error with status '${e.response.data.status}' and message: ${e.response.data.message}`
+          );
+        } else {
+          console.log("An unexpected error occurred:", e);
+        }
+      }
 
       toast({
         title: "NFT minted successfully!",
         description:
           "Your NFT has been minted and will appear in your wallet soon",
       });
+
+      setIsMinted(true);
     } catch (error: any) {
       console.error("Minting error:", error);
       toast({
@@ -83,6 +197,64 @@ export default function MintPage() {
       setIsMinting(false);
     }
   };
+
+  function formatTransaction(txData: any) {
+    const formattedTx = JSON.parse(JSON.stringify(txData));
+
+    // convert fields that need to be converted
+    // Handle BigInt conversion properly
+    formattedTx.value = formattedTx.value
+      ? BigInt(formattedTx.value).toString()
+      : "0";
+
+    formattedTx.gasLimit = formattedTx.gas;
+    delete formattedTx.gas;
+
+    // let the wallet decide on the following parameters:
+    delete formattedTx.nonce;
+    delete formattedTx.gasPrice;
+    delete formattedTx.gasFeeCap;
+    delete formattedTx.gasTipCap;
+    delete formattedTx.from;
+    delete formattedTx.hash;
+    return formattedTx;
+  }
+
+  async function signAndSendTransaction(txData: any) {
+    try {
+      if (typeof ethers === "undefined") {
+        throw new Error("ethers.js is not loaded.");
+      }
+
+      if (!window.ethereum) {
+        throw new Error("No Web3 provider detected.");
+      }
+
+      // Connect to the provider
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      console.log("Connected to provider");
+
+      // Request account access
+      const accounts = await provider.send("eth_requestAccounts", []);
+      const address = accounts[0];
+      console.log("Connected account:", address);
+
+      // Reformat transaction for ethers.js and web3 browser-based wallet
+      const formattedTx = formatTransaction(txData);
+      console.log("Transaction to sign:", formattedTx);
+
+      const signer = await provider.getSigner();
+      const tx = await signer.sendTransaction(formattedTx);
+      console.log("Transaction sent!");
+      console.log("Transaction hash:", tx.hash);
+      console.log("Full response:", tx);
+
+      return tx;
+    } catch (error) {
+      console.error("Error during transaction signing:", error);
+      throw error;
+    }
+  }
 
   return (
     <main className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-black via-gray-900 to-black min-h-screen text-white font-sans">
@@ -191,19 +363,11 @@ export default function MintPage() {
               )}
             </Button>
 
-            {transactionHash && (
+            {isMinted && (
               <div className="text-center text-sm mt-6">
                 <p className="font-medium text-green-400">
                   NFT minted successfully!
                 </p>
-                <a
-                  href={`https://etherscan.io/tx/${transactionHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 hover:underline"
-                >
-                  View on Etherscan
-                </a>
               </div>
             )}
           </form>

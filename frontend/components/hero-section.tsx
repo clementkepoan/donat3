@@ -5,7 +5,7 @@ import { ArrowRight } from "lucide-react";
 export function HeroSection() {
   return (
     <section className="bg-gradient-to-b from-background to-muted py-20 md:py-32">
-      <div className="container px-4 md:px-6">
+      <div className="px-4 md:px-6">
         <div className="flex flex-col items-center space-y-4 text-center">
           <div className="space-y-2">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">

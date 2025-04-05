@@ -34,15 +34,12 @@ export default function RootLayout({
         <div className="relative flex min-h-screen flex-col bg-[#0E0E12] text-white">
           <SiteHeader />
           <GoogleOAuthProvider
-            clientId={
-              process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-              "24120971675-c388mtn729elp3pemhqkvtj0vf5togj9.apps.googleusercontent.com"
-            }
+            clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string}
           >
             {children}
           </GoogleOAuthProvider>
           <footer className="border-t border-[#2A2A2E] bg-[#121217] py-6 mt-12">
-            <div className="container flex flex-col items-center justify-between gap-4 md:flex-row text-sm text-gray-400">
+            <div className="flex flex-col items-center justify-between gap-4 md:flex-row text-sm text-gray-400 px-20">
               <p className="text-center md:text-left">
                 &copy; {new Date().getFullYear()} Donat3. All rights reserved.
               </p>
