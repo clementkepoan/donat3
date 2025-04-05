@@ -11,7 +11,6 @@
 - [Technologies Used](#technologies-used)
 - [Installation Guide](#installation-guide)
 - [Contribution](#contribution)
-- [License](#license)
 - [Contact](#contact)
 
 ## Overview
