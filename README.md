@@ -106,7 +106,7 @@ Donat3’s architecture ensures scalability, security, and efficient blockchain 
    cd donat3
 
 2. **Set up necessary ENV variables (API Keys, URI, Auth)**
-   Frontend .env
+   -Frontend .env
    NEXT_PUBLIC_GOOGLE_CLIENT_ID = <YOUR_GOOGLE_CLIENT_I>
    NEXT_PUBLIC_ALCHEMY_API_KEY = <YOUR_ALCHEMY_API_KEK>
    NEXT_PUBLIC_MULTIBAAS_API_KEY = <YOUR_MULTIBAAS_API_KEY>
@@ -114,7 +114,7 @@ Donat3’s architecture ensures scalability, security, and efficient blockchain 
    NEXT_PUBLIC_PINATA_API_KEY = <YOUR_PINATA_API_KEY>
    NEXT_PUBLIC_PINATA_API_SECRET = <YOUR_PINATA_API_SECRET>
 
-   Backend .env
+   -Backend .env
    MONGO_URI=your_mongodb_connection_uri
    JWT_SECRET=your_jwt_secret_key
 
